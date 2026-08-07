@@ -113,10 +113,49 @@ const deleteDestination = async(destinationId, userId) => {
     return result.rows[0];
 };
 
+const searchDestination = async({
+    title,
+    city,
+    state,
+    country
+}) => {
+    let query = `SELECT * FROM destinations WHERE 1=1`;
+    const values = [];
+    let index = 1;
+
+    if(title){
+        query = query + `AND title ILIKE $${index}`;
+        values.push(`%${title}%`);
+        index++;
+    }
+
+    if(city){
+        query = query + `AND city ILIKE $${index}`;
+        values.push(`%${city}%`);
+        index++;
+    }
+
+    if(state){
+        query = query + `AND state ILIKE $${index}`;
+        values.push(`%${state}%`);
+        index++;
+    }
+
+    if(country){
+        query = query + `AND country ILIKE $${index}`;
+        values.push(`%${country}%`);
+        index++;
+    }
+
+    const result = await pool.query(query, values);
+    return result.rows;
+};
+
 export {
     createDestination,
     getAllDestinations,
     getDestinationById,
     updateDestination,
-    deleteDestination
+    deleteDestination,
+    searchDestination
 }

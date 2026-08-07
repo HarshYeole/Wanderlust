@@ -1,4 +1,4 @@
-import { createDestination, getAllDestinations, getDestinationById, updateDestination, deleteDestination } from "../models/destination.model.js";
+import { createDestination, getAllDestinations, getDestinationById, updateDestination, deleteDestination, searchDestination } from "../models/destination.model.js";
 import asyncHandler from "../utils/asyncHandler.js"
 import apiError from "../utils/apiError.js"
 import apiResponse from "../utils/apiResponse.js"
@@ -148,10 +148,33 @@ const deleteUserDestination = asyncHandler(async(req, res) => {
     )
 });
 
+const searchDestination = asyncHandler(async(req, res) => {
+    const {
+        title,
+        city,
+        state,
+        country
+    } = req.query;
+
+    const destinations = await searchDestination({
+        title,
+        city,
+        state,
+        country
+    });
+
+    return res
+    .status(200)
+    .json(
+        new apiResponse(200, destinations, "Destinations fetched successfully")
+    )
+});
+
 export {
     createUserDestination,
     getAllUserDestinations,
     getUserDestinationById,
     updateUserDestination,
-    deleteUserDestination
+    deleteUserDestination,
+    searchDestination
 }
