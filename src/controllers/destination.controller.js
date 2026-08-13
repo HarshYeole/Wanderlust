@@ -148,7 +148,7 @@ const deleteUserDestination = asyncHandler(async(req, res) => {
     )
 });
 
-const searchDestination = asyncHandler(async(req, res) => {
+const searchDestinations = asyncHandler(async(req, res) => {
     const {
         title,
         city,
@@ -176,5 +176,5 @@ export {
     getUserDestinationById,
     updateUserDestination,
     deleteUserDestination,
-    searchDestination
+    searchDestinations
 }
