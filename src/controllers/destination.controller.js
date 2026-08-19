@@ -26,8 +26,7 @@ const createUserDestination = asyncHandler(async(req, res) => {
         city,
         description,
         best_time_to_visit,
-        estimated_budget,
-        images
+        estimated_budget
     } = req.body;
 
     if(!(name && description && country && city)){
@@ -35,7 +34,7 @@ const createUserDestination = asyncHandler(async(req, res) => {
     }
 
     const destination = await createDestination({
-        user_id: req.user.id,
+        created_by: req.user.id,
         name,
         country,
         state,
@@ -114,7 +113,7 @@ const updateUserDestination = asyncHandler(async(req, res) => {
 
     const destination = await updateDestination({
         destinationId: id,
-        user_id: req.user.id,
+        created_by: req.user.id,
         name,
         country,
         state,
@@ -165,10 +164,14 @@ const searchDestinations = asyncHandler(async(req, res) => {
         country
     });
 
+    if(!destinations){
+        throw new apiError(404, "Destination not found")
+    }
+
     return res
     .status(200)
     .json(
-        new apiResponse(200, destinations, "Destinations fetched successfully")
+        new apiResponse(200,[], "Destinations fetched successfully")
     )
 });
 
