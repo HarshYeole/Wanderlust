@@ -44,9 +44,11 @@ const getAllTrips = async(userId) => {
 };
 
 const getTripById = async(tripId, userId) => {
-    const query = `SELECT * FROM trips WHERE id = $1;`;
+    const query = userId
+        ? `SELECT * FROM trips WHERE id = $1 AND user_id = $2;`
+        : `SELECT * FROM trips WHERE id = $1;`;
 
-    const result = await pool.query(query, [tripId, userId]);
+    const result = await pool.query(query, userId ? [tripId, userId] : [tripId]);
 
     return result.rows[0];
 };

@@ -25,7 +25,7 @@ const getAllFavorites = async(user_id) => {
     f.created_at,
 
     d.id AS destination_id,
-    d.title,
+    d.name,
     d.description,
     d.city,
     d.state,
@@ -44,7 +44,7 @@ const removeFavorite = async({
     user_id,
     destination_id
 }) => {
-    const query = `DELETE FROM favorite
+    const query = `DELETE FROM favorites
     WHERE user_id = $1 AND destination_id = $2 RETURNING *;`;
 
     const values = [
@@ -60,7 +60,7 @@ const isFavorite = async({
     user_id,
     destination_id
 }) => {
-    const query = `SELECT FROM favorites WHERE user_id = $1 AND destination_id = $2;`;
+    const query = `SELECT * FROM favorites WHERE user_id = $1 AND destination_id = $2;`;
 
     const values = [
         user_id,

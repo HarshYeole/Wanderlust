@@ -7,7 +7,7 @@ const router = express.Router();
 router.post("/createReview", verifyJWT, createUserReview)
 router.get("/getAllReviews/:destinationId", verifyJWT, getUserReviewsByDestination)
 router.put("/updateReview/:id", verifyJWT, updateUserReview)
-router.delete("/deleteReview/:id", deleteUserReview)
+router.delete("/deleteReview/:id", verifyJWT, deleteUserReview)
 router.get("/getAvgReview/:destinationId", verifyJWT, getAverageUserRating)
 
 export default router;

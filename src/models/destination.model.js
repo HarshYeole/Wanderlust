@@ -124,25 +124,25 @@ const searchDestination = async({
     let index = 1;
 
     if(title){
-        query = query + `AND title ILIKE $${index}`;
+        query = query + ` AND name ILIKE $${index}`;
         values.push(`%${title}%`);
         index++;
     }
 
     if(city){
-        query = query + `AND city ILIKE $${index}`;
+        query = query + ` AND city ILIKE $${index}`;
         values.push(`%${city}%`);
         index++;
     }
 
     if(state){
-        query = query + `AND state ILIKE $${index}`;
+        query = query + ` AND state ILIKE $${index}`;
         values.push(`%${state}%`);
         index++;
     }
 
     if(country){
-        query = query + `AND country ILIKE $${index}`;
+        query = query + ` AND country ILIKE $${index}`;
         values.push(`%${country}%`);
         index++;
     }

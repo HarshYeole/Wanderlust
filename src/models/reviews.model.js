@@ -13,7 +13,7 @@ const createReview = async({
     comment)
     VALUES ($1, $2, $3, $4) RETURNING *;`;
 
-    values = [
+    const values = [
         user_id,
         destination_id,
         rating,
@@ -26,7 +26,7 @@ const createReview = async({
 const getReviewsByDestination = async(destination_id) => {
     const query = `SELECT 
     r.id,
-    r.rating
+    r.rating,
     r.comment,
     r.created_at,
 

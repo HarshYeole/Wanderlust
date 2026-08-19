@@ -100,7 +100,7 @@ const updateUserDestination = asyncHandler(async(req, res) => {
 
     let imageUrl = getDestination.images;
 
-    if(req.files && req.files?.lenght > 0){
+    if(req.files && req.files?.length > 0){
         imageUrl = []
 
         for(const file of req.files){
@@ -113,6 +113,8 @@ const updateUserDestination = asyncHandler(async(req, res) => {
     }
 
     const destination = await updateDestination({
+        destinationId: id,
+        user_id: req.user.id,
         name,
         country,
         state,

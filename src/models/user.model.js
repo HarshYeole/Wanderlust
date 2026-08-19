@@ -34,6 +34,12 @@ const findUserForLogin = async (email) => {
     return result.rows[0];
 }
 
+const getUserById = async (userId) => {
+    const query = `SELECT id, full_name, email, role, created_at FROM users WHERE id = $1;`;
+    const result = await pool.query(query, [userId]);
+    return result.rows[0];
+}
+
 const updateRefreshToken = async (userId, refreshToken) => {
     const query = `UPDATE users SET refresh_token = $1 WHERE id = $2;`;
 
@@ -49,5 +55,6 @@ const deleteRefreshToken = async (userId) => {
 export { createUser, 
         findUserByEmail, 
         findUserForLogin,  
+        getUserById,
         updateRefreshToken, 
         deleteRefreshToken }

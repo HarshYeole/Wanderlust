@@ -45,7 +45,7 @@ const getUserReviewsByDestination = asyncHandler(async(req, res) => {
     return res
     .status(200)
     .json(
-        new apiResponse(200, review, "Reviews fetched successfully")
+        new apiResponse(200, reviews, "Reviews fetched successfully")
     )
 });
 

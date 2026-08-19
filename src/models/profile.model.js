@@ -38,7 +38,7 @@ const createProfile = async ({
     return result.rows[0];
 };
 
-const findProfileByUserId = async(usedId) => {
+const findProfileByUserId = async(userId) => {
     const query = `SELECT * FROM profiles WHERE user_id = $1;`;
 
     const result = await pool.query(query, [userId])

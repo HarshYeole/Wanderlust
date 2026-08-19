@@ -14,7 +14,7 @@ const addUserFavorite = asyncHandler(async(req, res) => {
         throw new apiError(404, "Destination not found")
     }
 
-    const existingFavorite = await isFavorite(req.user.id, destination_id)
+    const existingFavorite = await isFavorite({ user_id: req.user.id, destination_id })
 
     if(existingFavorite){
         throw new apiError(409, "Destination already added in favorite")
@@ -45,10 +45,10 @@ const getUserFavorites = asyncHandler(async(req, res) => {
 const removeUserFavorites = asyncHandler(async(req, res) => {
     const {destinationId} = req.params
 
-    const deletedFavorite = await removeFavorite(
-        req.user.id,
-        destinationId
-    )
+    const deletedFavorite = await removeFavorite({
+        user_id: req.user.id,
+        destination_id: destinationId
+    })
 
     if(!deletedFavorite){
         throw new apiError(404, "Favorite not found")
@@ -64,10 +64,10 @@ const removeUserFavorites = asyncHandler(async(req, res) => {
 const checkUserFavoriteStatus = asyncHandler(async(req, res) => {
     const {destinationId} = req.params
 
-    const favorite = await isFavorite(
-        req.user.id,
-        destinationId
-    )
+    const favorite = await isFavorite({
+        user_id: req.user.id,
+        destination_id: destinationId
+    })
 
     return res
     .status(200)

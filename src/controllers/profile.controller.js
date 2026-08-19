@@ -6,13 +6,14 @@ import uploadOnCloudinary from "../utils/uploadOnCloudinary.js"
 
 
 const createUserProfile = asyncHandler(async(req, res) => {
+    const { bio, phone, country, state, city, preferred_budget } = req.body;
     const existingProfile = await findProfileByUserId(req.user.id);
 
     if(existingProfile){
         throw new apiError(400, "Profile already exist")
     }
 
-    const profilePicture = null;
+    let profilePicture = null;
     
     if(req.file){
         const uploaded = await uploadOnCloudinary(req.file.path)
@@ -55,6 +56,7 @@ const getUserProfile = asyncHandler(async(req, res) => {
 });
 
 const updateUserProfile = asyncHandler(async(req, res) => {
+    const { bio, phone, country, state, city, preferred_budget } = req.body;
     const profile = await findProfileByUserId(req.user.id)
 
     if(!profile){

@@ -84,20 +84,22 @@ const loginUser = asyncHandler(async(req, res) => {
             })
         }
 
-        const accessToken = generateAccessToken(user.id)
-        const refreshToken = generateRefreshToken(user.id)
+        const accessToken = generateAccessToken(user)
+        const refreshToken = generateRefreshToken(user)
 
         await updateRefreshToken(user.id, refreshToken)
 
-        res.cookie("accessToken", accessToken),{
+        res.cookie("accessToken", accessToken, {
             httpOnly: true,
-            secure: true
-        }
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax"
+        })
 
-        res.cookie("refreshToken", refreshToken),{
+        res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
-            secure: true
-        }
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax"
+        })
 
         return res
         .status(200)
@@ -110,7 +112,7 @@ const loginUser = asyncHandler(async(req, res) => {
 });
 
 const logoutUser = asyncHandler(async(req, res) => {
-    const refreshToken = req.cookie?.refreshToken
+    const refreshToken = req.cookies?.refreshToken
 
         if(!refreshToken){
             return res

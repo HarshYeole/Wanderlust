@@ -32,7 +32,7 @@ const getTripDestinations = async(tripId) => {
     td.notes,
 
     d.id AS destination_id,
-    d.title,
+    d.name,
     d.description,
     d.city,
     d.state,
