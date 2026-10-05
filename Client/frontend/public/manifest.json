@@ -1,0 +1,16 @@
+{
+  "short_name": "Wanderlust",
+  "name": "Wanderlust | Go somewhere wonderful",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#176b4d",
+  "background_color": "#f8faf9"
+}

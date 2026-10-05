@@ -1,0 +1,2 @@
+const Invitations = () => <section className="page-shell py-20"><h1 className="font-display text-5xl">Trip invitations</h1><p className="mt-4 text-slate-600">When someone invites you along, it will appear here.</p></section>;
+export default Invitations;

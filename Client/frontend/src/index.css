@@ -1,0 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: #f8faf9; color: #18211e; font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+  ::selection { background: #b7e4c7; color: #10251a; }
+}
+
+@layer utilities {
+  .font-display { font-family: 'Playfair Display', Georgia, serif; }
+  .page-shell { @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10; }
+}
