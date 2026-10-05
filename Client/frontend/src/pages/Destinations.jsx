@@ -167,7 +167,7 @@ const Destinations = () => {
                         <div className="bg-slate-100 p-2">
                           <img
                             src={images[activeImageIndex]}
-                            alt={`${post.place_name} photo ${activeImageIndex + 1} of ${images.length}`}
+                            alt={`${post.place_name}, view ${activeImageIndex + 1} of ${images.length}`}
                             className="h-56 w-full rounded-lg object-cover"
                           />
                           {images.length > 1 && (
