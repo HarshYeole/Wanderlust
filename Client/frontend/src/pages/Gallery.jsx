@@ -3,6 +3,65 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import api from "../services/api";
 
+const TARGET_IMAGE_SIZE = 2 * 1024 * 1024;
+const MAX_IMAGE_DIMENSION = 2560;
+const MIN_IMAGE_DIMENSION = 1200;
+
+const compressImage = async (file) => {
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+    let scale = Math.min(
+      1,
+      MAX_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height),
+    );
+    let quality = 0.84;
+    let bestBlob = null;
+
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Image compression is unavailable");
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+      const currentQuality = quality;
+      const blob = await new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/webp", currentQuality),
+      );
+      if (!blob || blob.type !== "image/webp")
+        throw new Error("This image format cannot be compressed in your browser");
+      if (!bestBlob || blob.size < bestBlob.size) bestBlob = blob;
+      if (blob.size <= TARGET_IMAGE_SIZE) break;
+
+      if (quality > 0.76) {
+        quality = Math.max(0.76, quality - 0.04);
+      } else {
+        const nextScale = scale * 0.9;
+        if (
+          Math.max(bitmap.width, bitmap.height) * nextScale <
+          MIN_IMAGE_DIMENSION
+        ) {
+          break;
+        }
+        scale = nextScale;
+        quality = 0.84;
+      }
+    }
+
+    if (!bestBlob || bestBlob.size >= file.size) return file;
+
+    const compressedName = `${file.name.replace(/\.[^.]+$/, "")}.webp`;
+    return new File([bestBlob], compressedName, {
+      type: bestBlob.type,
+      lastModified: file.lastModified,
+    });
+  } finally {
+    bitmap?.close();
+  }
+};
+
 const emptyForm = {
   place_name: "",
   trip_details: "",
@@ -44,6 +103,7 @@ const Gallery = () => {
   const [gallery, setGallery] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
   const [viewingEntry, setViewingEntry] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -63,6 +123,23 @@ const Gallery = () => {
 
   const updateField = (field) => (event) =>
     setForm({ ...form, [field]: event.target.value });
+
+  const selectPhotos = async (event) => {
+    const input = event.currentTarget;
+    const files = Array.from(input.files || []).slice(0, 10);
+    if (!files.length) return;
+
+    setIsCompressing(true);
+    try {
+      const photos = await Promise.all(files.map(compressImage));
+      setForm((current) => ({ ...current, photos }));
+    } catch (error) {
+      toast.error(error.message || "Unable to prepare the selected images");
+    } finally {
+      setIsCompressing(false);
+      input.value = "";
+    }
+  };
 
   const openCreateForm = () => {
     setEditingEntry(null);
@@ -251,15 +328,19 @@ const Gallery = () => {
                 type="file"
                 accept="image/*"
                 multiple
-                onChange={(event) =>
-                  setForm({
-                    ...form,
-                    photos: Array.from(event.target.files).slice(0, 10),
-                  })
-                }
+                onChange={selectPhotos}
+                disabled={isCompressing || isSaving}
                 className="block w-full rounded-xl border border-slate-200 px-4 py-3 text-sm file:mr-4 file:rounded-full file:border-0 file:bg-emerald-100 file:px-3 file:py-2 file:font-bold file:text-emerald-800"
-                required={!editingEntry}
+                required={!editingEntry && form.photos.length === 0}
               />
+              {isCompressing && (
+                <p className="text-xs text-slate-500">Compressing large images...</p>
+              )}
+              {form.photos.length > 0 && !isCompressing && (
+                <p className="text-xs text-slate-500">
+                  {form.photos.length} {form.photos.length === 1 ? "photo" : "photos"} ready to upload
+                </p>
+              )}
               <input
                 value={form.place_name}
                 onChange={updateField("place_name")}
@@ -315,7 +396,7 @@ const Gallery = () => {
             </div>
             <button
               type="submit"
-              disabled={isSaving}
+              disabled={isSaving || isCompressing}
               className="mt-6 w-full rounded-full bg-emerald-800 px-5 py-3.5 text-sm font-bold text-white"
             >
               {isSaving

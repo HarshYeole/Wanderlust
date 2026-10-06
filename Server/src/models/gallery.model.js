@@ -9,6 +9,7 @@ const ensureGalleryTable = async () => {
         visited_date DATE,
         description TEXT,
         images TEXT[] NOT NULL DEFAULT '{}',
+        image_public_ids TEXT[] NOT NULL DEFAULT '{}',
         is_public BOOLEAN NOT NULL DEFAULT FALSE,
         transport TEXT,
         food TEXT,
@@ -19,6 +20,7 @@ const ensureGalleryTable = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );`)
     await pool.query(`ALTER TABLE user_galleries
+        ADD COLUMN IF NOT EXISTS image_public_ids TEXT[] NOT NULL DEFAULT '{}',
         ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT FALSE,
         ADD COLUMN IF NOT EXISTS transport TEXT,
         ADD COLUMN IF NOT EXISTS food TEXT,
@@ -42,12 +44,12 @@ const ensureGalleryTable = async () => {
     );`)
 }
 
-const createGalleryEntry = async ({ user_id, place_name, trip_details, visited_date, description, images, is_public, transport, food, stays, highlights, challenges, alternatives }) => {
+const createGalleryEntry = async ({ user_id, place_name, trip_details, visited_date, description, images, image_public_ids, is_public, transport, food, stays, highlights, challenges, alternatives }) => {
     await ensureGalleryTable()
     const result = await pool.query(`INSERT INTO user_galleries
-        (user_id, place_name, trip_details, visited_date, description, images, is_public, transport, food, stays, highlights, challenges, alternatives)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *;`,
-        [user_id, place_name, trip_details, visited_date || null, description, images, is_public, transport, food, stays, highlights, challenges, alternatives])
+        (user_id, place_name, trip_details, visited_date, description, images, image_public_ids, is_public, transport, food, stays, highlights, challenges, alternatives)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *;`,
+        [user_id, place_name, trip_details, visited_date || null, description, images, image_public_ids, is_public, transport, food, stays, highlights, challenges, alternatives])
     return result.rows[0]
 }
 
@@ -55,6 +57,12 @@ const getGalleryEntries = async (userId) => {
     await ensureGalleryTable()
     const result = await pool.query(`SELECT * FROM user_galleries WHERE user_id = $1 ORDER BY visited_date DESC NULLS LAST, created_at DESC;`, [userId])
     return result.rows
+}
+
+const getUserGalleryEntry = async (id, userId) => {
+    await ensureGalleryTable()
+    const result = await pool.query(`SELECT * FROM user_galleries WHERE id = $1 AND user_id = $2;`, [id, userId])
+    return result.rows[0]
 }
 
 const getPublicGalleryEntries = async (placeName, userId = null) => {
@@ -120,14 +128,15 @@ const removeGalleryFavorite = async (userId, galleryId) => {
     return result.rows[0]
 }
 
-const updateGalleryEntry = async ({ id, user_id, place_name, trip_details, visited_date, description, images, is_public, transport, food, stays, highlights, challenges, alternatives }) => {
+const updateGalleryEntry = async ({ id, user_id, place_name, trip_details, visited_date, description, images, image_public_ids, is_public, transport, food, stays, highlights, challenges, alternatives }) => {
     await ensureGalleryTable()
     const result = await pool.query(`UPDATE user_galleries SET
         place_name = $1, trip_details = $2, visited_date = $3, description = $4,
-        images = COALESCE($5, images), is_public = $6, transport = $7, food = $8,
-        stays = $9, highlights = $10, challenges = $11, alternatives = $12
-        WHERE id = $13 AND user_id = $14 RETURNING *;`,
-        [place_name, trip_details, visited_date || null, description, images, is_public, transport, food, stays, highlights, challenges, alternatives, id, user_id])
+        images = COALESCE($5, images), image_public_ids = COALESCE($6, image_public_ids),
+        is_public = $7, transport = $8, food = $9, stays = $10, highlights = $11,
+        challenges = $12, alternatives = $13
+        WHERE id = $14 AND user_id = $15 RETURNING *;`,
+        [place_name, trip_details, visited_date || null, description, images, image_public_ids, is_public, transport, food, stays, highlights, challenges, alternatives, id, user_id])
     return result.rows[0]
 }
 
@@ -137,4 +146,4 @@ const deleteGalleryEntry = async (id, userId) => {
     return result.rows[0]
 }
 
-export { createGalleryEntry, getGalleryEntries, getPublicGalleryEntries, addGalleryLike, removeGalleryLike, getFavoriteGalleryEntries, addGalleryFavorite, removeGalleryFavorite, updateGalleryEntry, deleteGalleryEntry }
+export { createGalleryEntry, getGalleryEntries, getUserGalleryEntry, getPublicGalleryEntries, addGalleryLike, removeGalleryLike, getFavoriteGalleryEntries, addGalleryFavorite, removeGalleryFavorite, updateGalleryEntry, deleteGalleryEntry }

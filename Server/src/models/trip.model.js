@@ -37,8 +37,10 @@ const createTrip = async ({
 
 const getAllTrips = async(userId) => {
     const query = `SELECT trips.*,
-        (trips.user_id = $1) AS is_owner
+        (trips.user_id = $1) AS is_owner,
+        owner.full_name AS owner_name
         FROM trips
+        INNER JOIN users AS owner ON owner.id = trips.user_id
         WHERE trips.user_id = $1
            OR EXISTS (
                SELECT 1 FROM trip_members

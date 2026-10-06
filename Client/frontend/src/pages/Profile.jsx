@@ -55,6 +55,7 @@ const Profile = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [placeSuggestions, setPlaceSuggestions] = useState([]);
   const [isSearchingPlaces, setIsSearchingPlaces] = useState(false);
+  const [placeSearchError, setPlaceSearchError] = useState("");
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [form, setForm] = useState({
     fullName: "",
@@ -117,8 +118,9 @@ const Profile = () => {
 
   useEffect(() => {
     const search = tripForm.destination.trim();
+    setPlaceSuggestions([]);
+    setPlaceSearchError("");
     if (search.length < 2 || selectedDestination?.label === search) {
-      setPlaceSuggestions([]);
       setIsSearchingPlaces(false);
       return undefined;
     }
@@ -154,7 +156,9 @@ const Profile = () => {
           .slice(0, 8);
         setPlaceSuggestions(suggestions);
       } catch (error) {
-        if (error.name !== "AbortError") setPlaceSuggestions([]);
+        if (error.name !== "AbortError") {
+          setPlaceSearchError("Place suggestions are unavailable right now. You can still enter any destination.");
+        }
       } finally {
         if (!controller.signal.aborted) setIsSearchingPlaces(false);
       }
@@ -623,6 +627,7 @@ const Profile = () => {
                   required
                 />
                 {isSearchingPlaces && <p className="mt-2 text-xs text-slate-500">Searching worldwide locations...</p>}
+                {placeSearchError && <p role="status" className="mt-2 text-xs text-amber-700">{placeSearchError}</p>}
                 {placeSuggestions.length > 0 && (
                   <ul id="destination-suggestions" role="listbox" className="mt-2 max-h-52 overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
                     {placeSuggestions.map((place) => (
