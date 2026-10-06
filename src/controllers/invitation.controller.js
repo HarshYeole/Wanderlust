@@ -1,7 +1,7 @@
 import asynchandler from "../utils/asyncHandler.js"
 import apiError from "../utils/apiError.js"
 import apiResponse from "../utils/apiResponse.js"
-import {sendInvitation, acceptInvitation, rejectInvitation} from "../models/invitation.model.js"
+import {sendInvitation, acceptInvitation, rejectInvitation, getPendingInvitations, getSocialStats, saveFriendship} from "../models/invitation.model.js"
 import { getTripById } from "../models/trip.model.js"
 import { addMember } from "../models/tripMembers.model.js"
 import { getUserById } from "../models/user.model.js"
@@ -59,6 +59,7 @@ const acceptTripInvitation = asynchandler(async(req, res) => {
         user_id: req.user.id,
         role: "member"
     });
+    await saveFriendship(invite.sender_id, req.user.id);
 
     return res
     .status(200)
@@ -83,8 +84,25 @@ const rejectTripInvitation = asynchandler(async(req, res) => {
     )
 });
 
+const getUserSocialStats = asynchandler(async(req, res) => {
+    const stats = await getSocialStats(req.user.id)
+
+    return res
+    .status(200)
+    .json(
+        new apiResponse(200, stats, "Social stats fetched successfully")
+    )
+});
+
+const getUserInvitations = asynchandler(async(req, res) => {
+    const invitations = await getPendingInvitations(req.user.id)
+    return res.status(200).json(new apiResponse(200, invitations, "Invitations fetched successfully"))
+});
+
 export {
     sendTripInvitation,
     acceptTripInvitation,
-    rejectTripInvitation
+    rejectTripInvitation,
+    getUserSocialStats,
+    getUserInvitations
 }

@@ -26,6 +26,12 @@ const findUserByEmail = async (email) => {
     return result.rows[0];
 }
 
+const findUserPublicByEmail = async (email) => {
+    const query = `SELECT id, full_name, email FROM users WHERE email = $1;`;
+    const result = await pool.query(query, [email]);
+    return result.rows[0];
+}
+
 const findUserForLogin = async (email) => {
     const query = `SELECT id, full_name, email, password, refresh_token FROM users WHERE email = $1;`;
 
@@ -37,6 +43,18 @@ const findUserForLogin = async (email) => {
 const getUserById = async (userId) => {
     const query = `SELECT id, full_name, email, role, created_at FROM users WHERE id = $1;`;
     const result = await pool.query(query, [userId]);
+    return result.rows[0];
+}
+
+const updateUserById = async (userId, { fullName, email }) => {
+    const query = `UPDATE users SET full_name = $2, email = $3 WHERE id = $1 RETURNING id, full_name, email, role, created_at;`;
+    const result = await pool.query(query, [userId, fullName, email]);
+    return result.rows[0];
+}
+
+const updatePasswordByEmail = async (email, password) => {
+    const query = `UPDATE users SET password = $2, refresh_token = NULL WHERE email = $1 RETURNING id, email;`;
+    const result = await pool.query(query, [email, password]);
     return result.rows[0];
 }
 
@@ -54,7 +72,10 @@ const deleteRefreshToken = async (userId) => {
 
 export { createUser, 
         findUserByEmail, 
+        findUserPublicByEmail,
         findUserForLogin,  
         getUserById,
+        updateUserById,
+        updatePasswordByEmail,
         updateRefreshToken, 
         deleteRefreshToken }

@@ -36,7 +36,18 @@ const createTrip = async ({
 };
 
 const getAllTrips = async(userId) => {
-    const query = `SELECT * FROM trips WHERE user_id = $1 ORDER BY created_at DESC;`;
+    const query = `SELECT trips.*,
+        (trips.user_id = $1) AS is_owner,
+        owner.full_name AS owner_name
+        FROM trips
+        INNER JOIN users AS owner ON owner.id = trips.user_id
+        WHERE trips.user_id = $1
+           OR EXISTS (
+               SELECT 1 FROM trip_members
+               WHERE trip_members.trip_id = trips.id
+                 AND trip_members.user_id = $1
+           )
+        ORDER BY trips.created_at DESC;`;
 
     const result = await pool.query(query, [userId]);
 
@@ -45,7 +56,15 @@ const getAllTrips = async(userId) => {
 
 const getTripById = async(tripId, userId) => {
     const query = userId
-        ? `SELECT * FROM trips WHERE id = $1 AND user_id = $2;`
+        ? `SELECT trips.*,
+              (trips.user_id = $2) AS is_owner
+           FROM trips
+           WHERE trips.id = $1
+             AND (trips.user_id = $2 OR EXISTS (
+                 SELECT 1 FROM trip_members
+                 WHERE trip_members.trip_id = trips.id
+                   AND trip_members.user_id = $2
+             ));`
         : `SELECT * FROM trips WHERE id = $1;`;
 
     const result = await pool.query(query, userId ? [tripId, userId] : [tripId]);
@@ -70,7 +89,11 @@ const updateTrip = async({
     end_date = $6,
     budget = $7,
     status = $8,
-    updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND user_id = $2
+        updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND (user_id = $2 OR EXISTS (
+                SELECT 1 FROM trip_members
+                WHERE trip_members.trip_id = trips.id
+                    AND trip_members.user_id = $2
+        ))
     RETURNING *;`;
 
     const values = [

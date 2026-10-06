@@ -1,12 +1,14 @@
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import { createUser, findUserByEmail, findUserForLogin, updateRefreshToken, deleteRefreshToken} from "../models/user.model.js"
+import { createUser, findUserByEmail, findUserForLogin, findUserPublicByEmail, getUserById, updatePasswordByEmail, updateUserById, updateRefreshToken, deleteRefreshToken} from "../models/user.model.js"
+import { createProfile } from "../models/profile.model.js"
 import { generateAccessToken} from "../utils/generateAccessToken.js"
 import { generateRefreshToken} from "../utils/generateRefreshToken.js"
 import asyncHandler from "../utils/asyncHandler.js"
 import apiError from "../utils/apiError.js"
 import apiResponse from "../utils/apiResponse.js"
 import dotenv from "dotenv"
+import uploadOnCloudinary from "../utils/uploadOnCloudinary.js"
 
 
 dotenv.config()
@@ -41,6 +43,14 @@ const registerUser = asyncHandler(async(req, res) => {
             password: hashedPassword
         })
 
+        if(req.file){
+            const uploaded = await uploadOnCloudinary(req.file.path)
+            await createProfile({
+                user_id: user.id,
+                profile_picture: uploaded?.secure_url || null
+            })
+        }
+
         return res
         .status(201)
         .json({
@@ -51,7 +61,7 @@ const registerUser = asyncHandler(async(req, res) => {
 });
 
 const loginUser = asyncHandler(async(req, res) => {
-    const {email, password} = req.body
+    const { email, password } = req.body
 
         if(!(email && password)){
             return res
@@ -62,14 +72,15 @@ const loginUser = asyncHandler(async(req, res) => {
             })
         }
 
-        const user = await findUserForLogin(email)
+        const normalizedEmail = email.trim().toLowerCase()
+        const user = await findUserForLogin(normalizedEmail)
 
         if (!user){
             return res
             .status(404)
             .json({
                 success: false,
-                message: "User not found"
+                message: "No account exists for this email address"
             })
         }
 
@@ -80,7 +91,7 @@ const loginUser = asyncHandler(async(req, res) => {
             .status(401)
             .json({
                 success: false,
-                message: "Invalid Password"
+                message: "Incorrect password. Please try again."
             })
         }
 
@@ -137,7 +148,82 @@ const logoutUser = asyncHandler(async(req, res) => {
             message: "User logged out successfully"
         })
 });
+
+const getCurrentUser = asyncHandler(async(req, res) => {
+    const user = await getUserById(req.user.id)
+
+    if(!user){
+        throw new apiError(404, "User not found")
+    }
+
+    return res
+    .status(200)
+    .json(
+        new apiResponse(200, user, "User fetched successfully")
+    )
+});
+
+const updateCurrentUser = asyncHandler(async(req, res) => {
+    const { fullName, email } = req.body
+
+    if(!(fullName?.trim() && email?.trim())){
+        throw new apiError(400, "Name and email are required")
+    }
+
+    const updatedUser = await updateUserById(req.user.id, {
+        fullName: fullName.trim(),
+        email: email.trim().toLowerCase()
+    })
+
+    return res
+    .status(200)
+    .json(
+        new apiResponse(200, updatedUser, "Account updated successfully")
+    )
+});
+
+const findUserForInvitation = asyncHandler(async(req, res) => {
+    const user = await findUserPublicByEmail(req.query.email?.trim().toLowerCase())
+    if(!user){
+        throw new apiError(404, "No user found with that email")
+    }
+    return res.status(200).json(new apiResponse(200, user, "User found"))
+});
+
+const resetPassword = asyncHandler(async(req, res) => {
+    const { email, password, confirmPassword } = req.body
+    const normalizedEmail = email?.trim().toLowerCase()
+
+    if(!(normalizedEmail && password && confirmPassword)){
+        throw new apiError(400, "Email, new password, and confirmation are required")
+    }
+
+    if(password.length < 8){
+        throw new apiError(400, "Password must be at least 8 characters")
+    }
+
+    if(password !== confirmPassword){
+        throw new apiError(400, "Passwords do not match")
+    }
+
+    const user = await findUserByEmail(normalizedEmail)
+    if(!user){
+        throw new apiError(404, "No account exists for this email address")
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10)
+    await updatePasswordByEmail(normalizedEmail, hashedPassword)
+
+    return res.status(200).json({
+        success: true,
+        message: "Password updated successfully"
+    })
+});
 export {registerUser,
         loginUser,
-        logoutUser
+        logoutUser,
+        getCurrentUser,
+        updateCurrentUser,
+        findUserForInvitation,
+        resetPassword
 }

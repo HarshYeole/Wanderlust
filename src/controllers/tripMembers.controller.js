@@ -14,7 +14,7 @@ const getTripMember = asynchandler(async(req, res) => {
     }
 
     const member = await isMember({ trip_id: tripId, user_id: req.user.id })
-    if(!member){
+    if(trip.user_id !== req.user.id && !member){
         throw new apiError(403, "You are not a member of this trip")
     }
 

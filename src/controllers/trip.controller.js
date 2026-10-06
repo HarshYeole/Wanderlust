@@ -2,6 +2,7 @@ import { createTrip, getAllTrips, getTripById, updateTrip, deleteTrip } from "..
 import asyncHandler from "../utils/asyncHandler.js"
 import apiError from "../utils/apiError.js"
 import apiResponse from "../utils/apiResponse.js"
+import { preserveTripFriendships } from "../models/invitation.model.js"
 
 const createUserTrip = asyncHandler(async(req, res) => {
     const {
@@ -103,6 +104,12 @@ const deleteUserTrip = asyncHandler(async(req, res) => {
     if(!trip){
         throw new apiError(404, "Trip not found")
     }
+
+    if(!trip.is_owner){
+        throw new apiError(403, "Only the trip creator can delete this trip")
+    }
+
+    await preserveTripFriendships(id)
 
     const deleted = await deleteTrip(id, req.user.id)
 

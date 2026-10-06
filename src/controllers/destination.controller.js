@@ -164,14 +164,10 @@ const searchDestinations = asyncHandler(async(req, res) => {
         country
     });
 
-    if(!destinations){
-        throw new apiError(404, "Destination not found")
-    }
-
     return res
     .status(200)
     .json(
-        new apiResponse(200,[], "Destinations fetched successfully")
+        new apiResponse(200, destinations, "Destinations fetched successfully")
     )
 });
 

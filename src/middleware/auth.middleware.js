@@ -35,4 +35,27 @@ const verifyJWT = async(req, res, next) => {
     }
 }
 
+const optionalJWT = (req, res, next) => {
+    let token;
+
+    if(req.headers.authorization && req.headers.authorization.startsWith("Bearer")){
+        token = req.headers.authorization.split(" ")[1];
+    }
+
+    if(!token){
+        token = req.cookies?.accessToken;
+    }
+
+    if(token){
+        try {
+            req.user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        } catch {
+            req.user = null;
+        }
+    }
+
+    next();
+}
+
 export default verifyJWT
+export { optionalJWT }

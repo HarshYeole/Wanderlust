@@ -1,12 +1,30 @@
 import asyncHandler from "../utils/asyncHandler.js"
 import apiError from "../utils/apiError.js"
 import apiResponse from "../utils/apiResponse.js"
-import {addFavorite, getAllFavorites, removeFavorite, isFavorite} from "../models/favorite.model.js"
+import {addFavorite, addSavedPlace, getAllFavorites, removeFavorite, isFavorite} from "../models/favorite.model.js"
 import { getDestinationById } from "../models/destination.model.js"
 
 
 const addUserFavorite = asyncHandler(async(req, res) => {
-    const {destination_id} = req.body
+    const {destination_id, name, country, image} = req.body
+
+    if (!/^\d+$/.test(String(destination_id))) {
+        if (!(destination_id && name)) {
+            throw new apiError(400, "Place key and name required")
+        }
+
+        const favorite = await addSavedPlace({
+            user_id: req.user.id,
+            place_key: destination_id,
+            name,
+            country: country || "",
+            image
+        })
+
+        return res
+        .status(200)
+        .json(new apiResponse(200, favorite, "Place added to favorites successfully"))
+    }
 
     const destination = await getDestinationById(destination_id)
 

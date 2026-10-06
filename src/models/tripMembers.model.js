@@ -18,14 +18,36 @@ const addMember = async ({
 };
 
 const getMembers = async(trip_id) => {
-    const query = `SELECT
-    tm.id,
-    tm.role,
-    tm.joined_at,
-    
-    u.id AS user_id,
-    u.full_name,
-    u.email FROM trip_members tm INNER JOIN users u ON tm.user_id = u.id WHERE tm.trip_id = $1 ORDER BY tm.joined_at ASC;`;
+    const query = `SELECT id, role, joined_at, user_id, full_name, email
+        FROM (
+            SELECT
+                NULL::INTEGER AS id,
+                'owner'::TEXT AS role,
+                trips.created_at AS joined_at,
+                owner.id AS user_id,
+                owner.full_name,
+                owner.email,
+                0 AS sort_order
+            FROM trips
+            INNER JOIN users AS owner ON owner.id = trips.user_id
+            WHERE trips.id = $1
+
+            UNION ALL
+
+            SELECT
+                tm.id,
+                tm.role,
+                tm.joined_at,
+                member.id AS user_id,
+                member.full_name,
+                member.email,
+                1 AS sort_order
+            FROM trip_members AS tm
+            INNER JOIN users AS member ON member.id = tm.user_id
+            INNER JOIN trips ON trips.id = tm.trip_id
+            WHERE tm.trip_id = $1 AND tm.user_id <> trips.user_id
+        ) AS trip_people
+        ORDER BY sort_order, joined_at ASC;`;
 
     const values = [
         trip_id
