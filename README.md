@@ -2,6 +2,20 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Google AdSense deployment
+
+The site includes public About, Contact, Privacy, Cookie, and Terms pages, a
+sitemap, and a conditional AdSense script loader. The loader is inactive until
+`REACT_APP_ADSENSE_CLIENT_ID` is set to the publisher ID from AdSense (for
+example, `ca-pub-1234567890123456`).
+
+After AdSense provides the publisher ID, publish `/ads.txt` at the site root
+with the seller line supplied by AdSense, for example
+`google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0`. Do not publish
+example IDs. Before serving ads to users in the EEA, UK, or Switzerland, set up
+a Google-certified consent management platform as required by Google's consent
+policy. Add any ad placements only after AdSense approval and review.
+
 ## Available Scripts
 
 In the project directory, you can run:
