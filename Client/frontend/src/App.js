@@ -123,41 +123,10 @@ function PageMetadata() {
   return null;
 }
 
-function AdSenseScript() {
-  const publisherId = process.env.REACT_APP_ADSENSE_CLIENT_ID?.trim();
-
-  useEffect(() => {
-    if (!publisherId) return;
-    if (!/^ca-pub-\d{16}$/.test(publisherId)) {
-      console.error(
-        "Invalid REACT_APP_ADSENSE_CLIENT_ID. Expected a value such as ca-pub-1234567890123456.",
-      );
-      return;
-    }
-
-    const existingScript = document.querySelector(
-      'script[data-wanderlust-adsense="true"]',
-    );
-    if (existingScript) return;
-
-    const script = document.createElement("script");
-    script.async = true;
-    script.crossOrigin = "anonymous";
-    script.dataset.wanderlustAdsense = "true";
-    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${publisherId}`;
-    document.head.appendChild(script);
-
-    return () => script.remove();
-  }, [publisherId]);
-
-  return null;
-}
-
 function App() {
   return (
     <div className="min-h-screen bg-[#f8faf9] text-slate-900 flex flex-col">
       <PageMetadata />
-      <AdSenseScript />
       <Navbar />
 
       <main className="flex-1">

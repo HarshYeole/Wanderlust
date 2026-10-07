@@ -5,9 +5,8 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 ## Google AdSense deployment
 
 The site includes public About, Contact, Privacy, Cookie, and Terms pages, a
-sitemap, and a conditional AdSense script loader. The loader is inactive until
-`REACT_APP_ADSENSE_CLIENT_ID` is set to the publisher ID from AdSense (for
-example, `ca-pub-1234567890123456`).
+sitemap, and the AdSense script in `public/index.html`. Replace its publisher
+ID there if AdSense provides a different ID.
 
 After AdSense provides the publisher ID, publish `/ads.txt` at the site root
 with the seller line supplied by AdSense, for example
