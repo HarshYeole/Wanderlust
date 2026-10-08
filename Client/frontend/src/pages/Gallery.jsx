@@ -198,10 +198,12 @@ const Gallery = () => {
     }
   };
 
-  const removeEntry = async (id) => {
+  const removeEntry = async (entry) => {
+    if (!window.confirm(`Delete the memory from ${entry.place_name}? This cannot be undone.`)) return;
+
     try {
-      await api.delete(`/gallery/${id}`);
-      setGallery((current) => current.filter((entry) => entry.id !== id));
+      await api.delete(`/gallery/${entry.id}`);
+      setGallery((current) => current.filter((item) => item.id !== entry.id));
       toast.success("Gallery memory removed");
     } catch (error) {
       toast.error(error.response?.data?.message || "Unable to remove gallery memory");
@@ -277,7 +279,7 @@ const Gallery = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => removeEntry(entry.id)}
+                      onClick={() => removeEntry(entry)}
                       aria-label={`Delete ${entry.place_name} memory`}
                       className="text-slate-400 hover:text-rose-600"
                     >

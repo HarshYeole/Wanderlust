@@ -38,6 +38,24 @@ const isCompleted = (trip) => {
   );
 };
 
+const getTripDescription = (description) => {
+  if (!description) return "";
+  if (typeof description === "object") {
+    return description.notes || description.itinerary || "";
+  }
+
+  try {
+    const parsed = JSON.parse(description);
+    if (parsed && typeof parsed === "object") {
+      return parsed.notes || parsed.itinerary || "";
+    }
+  } catch {
+    // Older trips store their description as plain text.
+  }
+
+  return description;
+};
+
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -519,7 +537,7 @@ const Profile = () => {
                   {trip.title}
                 </h3>
                 <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
-                  {trip.description}
+                  {getTripDescription(trip.description)}
                 </p>
                 {trip.end_date && (
                   <p className="mt-4 text-xs font-medium text-slate-500">
