@@ -1,7 +1,10 @@
 import pool from "../config/db.js"
 
-const ensureSavedPlacesTable = async () => {
-    await pool.query(`CREATE TABLE IF NOT EXISTS user_saved_places (
+let savedPlacesTableReady
+
+const ensureSavedPlacesTable = () => {
+    if (!savedPlacesTableReady) {
+        savedPlacesTableReady = pool.query(`CREATE TABLE IF NOT EXISTS user_saved_places (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         place_key VARCHAR(180) NOT NULL,
@@ -10,7 +13,12 @@ const ensureSavedPlacesTable = async () => {
         image TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id, place_key)
-    );`)
+    );`).catch((error) => {
+            savedPlacesTableReady = undefined
+            throw error
+        })
+    }
+    return savedPlacesTableReady
 }
 
 const addSavedPlace = async ({ user_id, place_key, name, country, image }) => {

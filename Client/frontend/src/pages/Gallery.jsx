@@ -11,6 +11,13 @@ const compressImage = async (file) => {
   let bitmap;
   try {
     bitmap = await createImageBitmap(file);
+    if (
+      file.size <= TARGET_IMAGE_SIZE &&
+      Math.max(bitmap.width, bitmap.height) <= MAX_IMAGE_DIMENSION
+    ) {
+      return file;
+    }
+
     let scale = Math.min(
       1,
       MAX_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height),
@@ -18,7 +25,7 @@ const compressImage = async (file) => {
     let quality = 0.84;
     let bestBlob = null;
 
-    for (let attempt = 0; attempt < 12; attempt += 1) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(bitmap.width * scale));
       canvas.height = Math.max(1, Math.round(bitmap.height * scale));
@@ -35,9 +42,9 @@ const compressImage = async (file) => {
       if (!bestBlob || blob.size < bestBlob.size) bestBlob = blob;
       if (blob.size <= TARGET_IMAGE_SIZE) break;
 
-      if (quality > 0.76) {
-        quality = Math.max(0.76, quality - 0.04);
-      } else {
+      if (attempt === 0) {
+        quality = 0.76;
+      } else if (attempt === 1) {
         const nextScale = scale * 0.9;
         if (
           Math.max(bitmap.width, bitmap.height) * nextScale <
@@ -60,6 +67,23 @@ const compressImage = async (file) => {
   } finally {
     bitmap?.close();
   }
+};
+
+const compressImages = async (files) => {
+  const photos = new Array(files.length);
+  let nextIndex = 0;
+  const worker = async () => {
+    while (nextIndex < files.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      photos[index] = await compressImage(files[index]);
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(files.length, 2) }, () => worker()),
+  );
+  return photos;
 };
 
 const emptyForm = {
@@ -131,7 +155,7 @@ const Gallery = () => {
 
     setIsCompressing(true);
     try {
-      const photos = await Promise.all(files.map(compressImage));
+      const photos = await compressImages(files);
       setForm((current) => ({ ...current, photos }));
     } catch (error) {
       toast.error(error.message || "Unable to prepare the selected images");
@@ -253,6 +277,8 @@ const Gallery = () => {
                     src={image}
                     alt={entry.place_name}
                     className="h-full min-h-0 w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                 ))}
               </button>
@@ -450,6 +476,7 @@ const Gallery = () => {
                   src={image}
                   alt={viewingEntry.place_name}
                   className="max-h-[70vh] w-full rounded-2xl bg-slate-100 object-contain"
+                  decoding="async"
                 />
               ))}
             </div>

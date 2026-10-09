@@ -1,13 +1,21 @@
 import pool from "../config/db.js"
 
-const ensureFriendshipsTable = async () => {
-    await pool.query(`CREATE TABLE IF NOT EXISTS user_friendships (
+let friendshipsTableReady
+
+const ensureFriendshipsTable = () => {
+    if (!friendshipsTableReady) {
+        friendshipsTableReady = pool.query(`CREATE TABLE IF NOT EXISTS user_friendships (
         user_a TEXT NOT NULL,
         user_b TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (user_a, user_b),
         CHECK (user_a <> user_b)
-    );`)
+    );`).catch((error) => {
+            friendshipsTableReady = undefined
+            throw error
+        })
+    }
+    return friendshipsTableReady
 };
 
 const saveFriendship = async (userOne, userTwo) => {

@@ -8,15 +8,23 @@ import { deleteCloudinaryImages, getGalleryImagePublicIds } from "../utils/galle
 const uploadGalleryImages = async (files) => {
     const uploadedImages = []
     try {
-        for (const file of files || []) {
-            const uploaded = await uploadOnCloudinary(file.path)
-            if (!uploaded?.secure_url || !uploaded?.public_id) {
+        const imageFiles = files || []
+        for (let index = 0; index < imageFiles.length; index += 3) {
+            const batch = imageFiles.slice(index, index + 3)
+            const results = await Promise.all(
+                batch.map((file) => uploadOnCloudinary(file.path)),
+            )
+            for (const uploaded of results) {
+                if (uploaded?.secure_url && uploaded?.public_id) {
+                    uploadedImages.push({
+                        url: uploaded.secure_url,
+                        public_id: uploaded.public_id
+                    })
+                }
+            }
+            if (results.some((uploaded) => !uploaded?.secure_url || !uploaded?.public_id)) {
                 throw new apiError(502, "Unable to upload one or more gallery images")
             }
-            uploadedImages.push({
-                url: uploaded.secure_url,
-                public_id: uploaded.public_id
-            })
         }
         return uploadedImages
     } catch (error) {

@@ -1,29 +1,38 @@
 import { useEffect } from "react";
+import { lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Destinations from "./pages/Destinations";
-import DestinationDetails from "./pages/DestinationDetails";
-import Trips from "./pages/Trips";
-import TripItinerary from "./pages/TripItinerary";
-import Profile from "./pages/Profile";
-import Gallery from "./pages/Gallery";
-import Favorites from "./pages/Favorites";
-import Invitations from "./pages/Invitations";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import {
-  About,
-  Contact,
-  CookiePolicy,
-  PrivacyPolicy,
-  TermsOfService,
-} from "./pages/SitePages";
+const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const Destinations = lazy(() => import("./pages/Destinations"));
+const DestinationDetails = lazy(() => import("./pages/DestinationDetails"));
+const Trips = lazy(() => import("./pages/Trips"));
+const TripItinerary = lazy(() => import("./pages/TripItinerary"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Gallery = lazy(() => import("./pages/Gallery"));
+const Favorites = lazy(() => import("./pages/Favorites"));
+const Invitations = lazy(() => import("./pages/Invitations"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const About = lazy(() =>
+  import("./pages/SitePages").then((module) => ({ default: module.About })),
+);
+const Contact = lazy(() =>
+  import("./pages/SitePages").then((module) => ({ default: module.Contact })),
+);
+const CookiePolicy = lazy(() =>
+  import("./pages/SitePages").then((module) => ({ default: module.CookiePolicy })),
+);
+const PrivacyPolicy = lazy(() =>
+  import("./pages/SitePages").then((module) => ({ default: module.PrivacyPolicy })),
+);
+const TermsOfService = lazy(() =>
+  import("./pages/SitePages").then((module) => ({ default: module.TermsOfService })),
+);
 
 const publicPageMetadata = {
   "/": {
@@ -130,26 +139,34 @@ function App() {
       <Navbar />
 
       <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/destinations" element={<Destinations />} />
-          <Route path="/destination/:id" element={<DestinationDetails />} />
-          <Route path="/trips" element={<Trips />} />
-          <Route path="/trips/:id/itinerary" element={<TripItinerary />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/favorites" element={<Favorites />} />
-          <Route path="/invitations" element={<Invitations />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/cookie-policy" element={<CookiePolicy />} />
-          <Route path="/terms-of-service" element={<TermsOfService />} />
-        </Routes>
+        <Suspense
+          fallback={
+            <div className="page-shell grid min-h-[50vh] place-items-center text-sm text-slate-500">
+              Loading page...
+            </div>
+          }
+        >
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/destinations" element={<Destinations />} />
+            <Route path="/destination/:id" element={<DestinationDetails />} />
+            <Route path="/trips" element={<Trips />} />
+            <Route path="/trips/:id/itinerary" element={<TripItinerary />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/invitations" element={<Invitations />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/cookie-policy" element={<CookiePolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+          </Routes>
+        </Suspense>
       </main>
 
       <Footer />

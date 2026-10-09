@@ -1,7 +1,11 @@
 import pool from "../config/db.js"
 
-const ensureGalleryTable = async () => {
-    await pool.query(`CREATE TABLE IF NOT EXISTS user_galleries (
+let galleryTablesReady
+
+const ensureGalleryTable = () => {
+    if (!galleryTablesReady) {
+        galleryTablesReady = (async () => {
+            await pool.query(`CREATE TABLE IF NOT EXISTS user_galleries (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         place_name VARCHAR(180) NOT NULL,
@@ -19,7 +23,7 @@ const ensureGalleryTable = async () => {
         alternatives TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );`)
-    await pool.query(`ALTER TABLE user_galleries
+            await pool.query(`ALTER TABLE user_galleries
         ADD COLUMN IF NOT EXISTS image_public_ids TEXT[] NOT NULL DEFAULT '{}',
         ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT FALSE,
         ADD COLUMN IF NOT EXISTS transport TEXT,
@@ -28,20 +32,26 @@ const ensureGalleryTable = async () => {
         ADD COLUMN IF NOT EXISTS highlights TEXT,
         ADD COLUMN IF NOT EXISTS challenges TEXT,
         ADD COLUMN IF NOT EXISTS alternatives TEXT;`)
-    await pool.query(`CREATE TABLE IF NOT EXISTS user_gallery_favorites (
+            await pool.query(`CREATE TABLE IF NOT EXISTS user_gallery_favorites (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         gallery_id INTEGER NOT NULL REFERENCES user_galleries(id) ON DELETE CASCADE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id, gallery_id)
     );`)
-    await pool.query(`CREATE TABLE IF NOT EXISTS user_gallery_likes (
+            await pool.query(`CREATE TABLE IF NOT EXISTS user_gallery_likes (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         gallery_id INTEGER NOT NULL REFERENCES user_galleries(id) ON DELETE CASCADE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id, gallery_id)
     );`)
+        })().catch((error) => {
+            galleryTablesReady = undefined
+            throw error
+        })
+    }
+    return galleryTablesReady
 }
 
 const createGalleryEntry = async ({ user_id, place_name, trip_details, visited_date, description, images, image_public_ids, is_public, transport, food, stays, highlights, challenges, alternatives }) => {
