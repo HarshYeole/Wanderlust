@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import { createUser, findUserByEmail, findUserForLogin, findUserPublicByEmail, getUserById, updatePasswordByEmail, updateUserById, updateRefreshToken, deleteRefreshToken} from "../models/user.model.js"
+import { createHash, randomBytes } from "node:crypto"
+import { createUser, findUserByEmail, findUserForLogin, findUserPublicByEmail, getUserById, createPasswordResetToken, deletePasswordResetToken, resetPasswordWithToken, updateUserById, updateRefreshToken, deleteRefreshToken} from "../models/user.model.js"
 import { createProfile } from "../models/profile.model.js"
 import { generateAccessToken} from "../utils/generateAccessToken.js"
 import { generateRefreshToken} from "../utils/generateRefreshToken.js"
@@ -9,6 +10,7 @@ import apiError from "../utils/apiError.js"
 import apiResponse from "../utils/apiResponse.js"
 import dotenv from "dotenv"
 import uploadOnCloudinary from "../utils/uploadOnCloudinary.js"
+import sendPasswordResetEmail from "../utils/sendPasswordResetEmail.js"
 
 
 dotenv.config()
@@ -16,7 +18,7 @@ dotenv.config()
 
 const registerUser = asyncHandler(async(req, res) => {
     const {fullName, email, password} = req.body
-        if(!(fullName && email && password)){
+        if(!(fullName && typeof email === "string" && email.trim() && password)){
             return res
             .status(400).json({
                 success: false,
@@ -24,7 +26,8 @@ const registerUser = asyncHandler(async(req, res) => {
             })
         }
 
-        const existingUser = await findUserByEmail(email);
+        const normalizedEmail = email.trim().toLowerCase()
+        const existingUser = await findUserByEmail(normalizedEmail);
 
         if(existingUser){
             return res
@@ -39,7 +42,7 @@ const registerUser = asyncHandler(async(req, res) => {
 
         const user = await createUser({
             fullName,
-            email,
+            email: normalizedEmail,
             password: hashedPassword
         })
 
@@ -190,12 +193,50 @@ const findUserForInvitation = asyncHandler(async(req, res) => {
     return res.status(200).json(new apiResponse(200, user, "User found"))
 });
 
-const resetPassword = asyncHandler(async(req, res) => {
-    const { email, password, confirmPassword } = req.body
-    const normalizedEmail = email?.trim().toLowerCase()
+const requestPasswordReset = asyncHandler(async(req, res) => {
+    const rawEmail = req.body?.email
+    if (typeof rawEmail !== "string" || !rawEmail.trim()) {
+        throw new apiError(400, "Email address is required")
+    }
+    const email = rawEmail.trim().toLowerCase()
 
-    if(!(normalizedEmail && password && confirmPassword)){
-        throw new apiError(400, "Email, new password, and confirmation are required")
+    const genericResponse = {
+        success: true,
+        message: "If an account exists for that email, a password reset link will be sent."
+    }
+    const user = await findUserByEmail(email)
+    if (user) {
+        const token = randomBytes(32).toString("hex")
+        const tokenHash = createHash("sha256").update(token).digest("hex")
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000)
+        const storedToken = await createPasswordResetToken(user.id, tokenHash, expiresAt)
+
+        if (storedToken) {
+            try {
+                await sendPasswordResetEmail(user.email, token)
+            } catch (error) {
+                await deletePasswordResetToken(tokenHash)
+                console.error(
+                    "Password reset email could not be sent:",
+                    error.code || error.name || "unknown email transport error",
+                )
+            }
+        }
+    }
+
+    return res.status(200).json(genericResponse)
+})
+
+const resetPassword = asyncHandler(async(req, res) => {
+    const { token, password, confirmPassword } = req.body || {}
+
+    if (
+        typeof token !== "string" ||
+        typeof password !== "string" ||
+        typeof confirmPassword !== "string" ||
+        !(token && password && confirmPassword)
+    ) {
+        throw new apiError(400, "Reset link, new password, and confirmation are required")
     }
 
     if(password.length < 8){
@@ -206,13 +247,16 @@ const resetPassword = asyncHandler(async(req, res) => {
         throw new apiError(400, "Passwords do not match")
     }
 
-    const user = await findUserByEmail(normalizedEmail)
-    if(!user){
-        throw new apiError(404, "No account exists for this email address")
+    if (!/^[a-f0-9]{64}$/i.test(token)) {
+        throw new apiError(400, "This reset link is invalid or expired. Request a new one.")
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
-    await updatePasswordByEmail(normalizedEmail, hashedPassword)
+    const tokenHash = createHash("sha256").update(token).digest("hex")
+    const updatedUser = await resetPasswordWithToken(tokenHash, hashedPassword)
+    if (!updatedUser) {
+        throw new apiError(400, "This reset link is invalid or expired. Request a new one.")
+    }
 
     return res.status(200).json({
         success: true,
@@ -225,5 +269,6 @@ export {registerUser,
         getCurrentUser,
         updateCurrentUser,
         findUserForInvitation,
+        requestPasswordReset,
         resetPassword
 }
