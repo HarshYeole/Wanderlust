@@ -11,27 +11,36 @@ const uploadGalleryImages = async (files) => {
     const attemptedPublicIds = []
     try {
         const imageFiles = files || []
-        for (const [index, file] of imageFiles.entries()) {
-            const publicId = randomUUID()
-            attemptedPublicIds.push(publicId)
-            let uploaded
-            try {
-                uploaded = await uploadOnCloudinary(file.path, {
-                    throwOnError: true,
-                    retries: 2,
-                    public_id: publicId,
-                    overwrite: true
-                })
-            } catch (error) {
-                throw new apiError(502, `Photo ${index + 1} could not be uploaded: ${error.message}`)
-            }
-            if (!uploaded?.secure_url || !uploaded?.public_id) {
-                throw new apiError(502, `Photo ${index + 1} could not be uploaded. Please try again.`)
-            }
-            uploadedImages.push({
-                url: uploaded.secure_url,
-                public_id: uploaded.public_id
+        for (let start = 0; start < imageFiles.length; start += 3) {
+            const batch = imageFiles.slice(start, start + 3).map((file, batchIndex) => {
+                const index = start + batchIndex
+                const publicId = randomUUID()
+                attemptedPublicIds.push(publicId)
+                return {
+                    index,
+                    upload: uploadOnCloudinary(file.path, {
+                        throwOnError: true,
+                        retries: 2,
+                        public_id: publicId,
+                        overwrite: true
+                    })
+                }
             })
+            const results = await Promise.allSettled(batch.map(({ upload }) => upload))
+
+            for (const [batchIndex, result] of results.entries()) {
+                const { index } = batch[batchIndex]
+                if (result.status === "rejected") {
+                    throw new apiError(502, `Photo ${index + 1} could not be uploaded: ${result.reason?.message || "Please try again."}`)
+                }
+                if (!result.value?.secure_url || !result.value?.public_id) {
+                    throw new apiError(502, `Photo ${index + 1} could not be uploaded. Please try again.`)
+                }
+                uploadedImages.push({
+                    url: result.value.secure_url,
+                    public_id: result.value.public_id
+                })
+            }
         }
         return uploadedImages
     } catch (error) {

@@ -207,8 +207,8 @@ const Gallery = () => {
       });
       form.photos.forEach((photo) => payload.append("photos", photo));
       const { data } = editingEntry
-        ? await api.put(`/gallery/${editingEntry.id}`, payload)
-        : await api.post("/gallery", payload);
+        ? await api.put(`/gallery/${editingEntry.id}`, payload, { timeout: 180000 })
+        : await api.post("/gallery", payload, { timeout: 180000 });
       setGallery((current) =>
         editingEntry
           ? current.map((entry) =>
@@ -221,7 +221,12 @@ const Gallery = () => {
       setIsFormOpen(false);
       toast.success(editingEntry ? "Gallery memory updated" : "Memory added to your gallery");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Unable to add gallery memory");
+      toast.error(
+        error.response?.data?.message ||
+          (error.request
+            ? "The upload connection was interrupted. Your photos are still selected; please try again."
+            : "Unable to add gallery memory"),
+      );
     } finally {
       setIsSaving(false);
     }
