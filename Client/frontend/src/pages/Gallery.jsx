@@ -6,6 +6,7 @@ import api from "../services/api";
 const TARGET_IMAGE_SIZE = 2 * 1024 * 1024;
 const MAX_IMAGE_DIMENSION = 2560;
 const MIN_IMAGE_DIMENSION = 1200;
+const MAX_GALLERY_PHOTOS = 8;
 
 const compressImage = async (file) => {
   let bitmap;
@@ -150,8 +151,12 @@ const Gallery = () => {
 
   const selectPhotos = async (event) => {
     const input = event.currentTarget;
-    const files = Array.from(input.files || []).slice(0, 10);
+    const selectedFiles = Array.from(input.files || []);
+    const files = selectedFiles.slice(0, MAX_GALLERY_PHOTOS);
     if (!files.length) return;
+    if (selectedFiles.length > MAX_GALLERY_PHOTOS) {
+      toast.error(`You can upload up to ${MAX_GALLERY_PHOTOS} photos.`);
+    }
 
     setIsCompressing(true);
     try {
@@ -361,6 +366,9 @@ const Gallery = () => {
                 className="block w-full rounded-xl border border-slate-200 px-4 py-3 text-sm file:mr-4 file:rounded-full file:border-0 file:bg-emerald-100 file:px-3 file:py-2 file:font-bold file:text-emerald-800"
                 required={!editingEntry && form.photos.length === 0}
               />
+              <p className="text-xs text-slate-500">
+                You can upload up to {MAX_GALLERY_PHOTOS} photos per memory.
+              </p>
               {isCompressing && (
                 <p className="text-xs text-slate-500">Compressing large images...</p>
               )}

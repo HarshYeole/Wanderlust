@@ -1,6 +1,5 @@
-import { useEffect } from "react";
-import { lazy, Suspense } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { matchPath, Routes, Route, useLocation } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -132,6 +131,46 @@ function PageMetadata() {
   return null;
 }
 
+function PersistentPage({ path, renderPage }) {
+  const { pathname } = useLocation();
+  const activeMatch = matchPath({ path, end: true }, pathname);
+  const activePath = activeMatch ? pathname : null;
+  const isAuthenticated = Boolean(localStorage.getItem("accessToken"));
+  const [visitedPaths, setVisitedPaths] = useState(() =>
+    isAuthenticated && activePath ? [activePath] : [],
+  );
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setVisitedPaths([]);
+      return;
+    }
+    if (activePath) {
+      setVisitedPaths((current) =>
+        current.includes(activePath) ? current : [...current, activePath],
+      );
+    }
+  }, [activePath, isAuthenticated]);
+
+  if (!isAuthenticated) {
+    return activeMatch ? <div>{renderPage(activeMatch.params)}</div> : null;
+  }
+
+  return visitedPaths.map((visitedPath) => {
+    const isActive = pathname === visitedPath;
+    const params = matchPath({ path, end: true }, visitedPath)?.params || {};
+    return (
+      <div
+        key={visitedPath}
+        hidden={!isActive}
+        aria-hidden={!isActive}
+      >
+        {renderPage(params)}
+      </div>
+    );
+  });
+}
+
 function App() {
   return (
     <div className="min-h-screen bg-[#f8faf9] text-slate-900 flex flex-col">
@@ -154,10 +193,6 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/destination/:id" element={<DestinationDetails />} />
-            <Route path="/trips" element={<Trips />} />
-            <Route path="/trips/:id/itinerary" element={<TripItinerary />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/gallery" element={<Gallery />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/invitations" element={<Invitations />} />
             <Route path="/about" element={<About />} />
@@ -166,6 +201,13 @@ function App() {
             <Route path="/cookie-policy" element={<CookiePolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
           </Routes>
+          <PersistentPage path="/profile" renderPage={() => <Profile />} />
+          <PersistentPage path="/gallery" renderPage={() => <Gallery />} />
+          <PersistentPage path="/trips" renderPage={() => <Trips />} />
+          <PersistentPage
+            path="/trips/:id/itinerary"
+            renderPage={({ id }) => <TripItinerary tripId={id} />}
+          />
         </Suspense>
       </main>
 

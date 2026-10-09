@@ -1,6 +1,6 @@
 import { ArrowLeft, CalendarDays, Save } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../services/api";
 
@@ -13,8 +13,7 @@ const readContent = (description) => {
   }
 };
 
-const TripItinerary = () => {
-  const { id } = useParams();
+const TripItinerary = ({ tripId: id }) => {
   const navigate = useNavigate();
   const [trip, setTrip] = useState(null);
   const [form, setForm] = useState({ notes: "", itinerary: "" });

@@ -4,13 +4,27 @@ import apiResponse from "../utils/apiResponse.js"
 import uploadOnCloudinary from "../utils/uploadOnCloudinary.js"
 import { createGalleryEntry, deleteGalleryEntry, getGalleryEntries, getUserGalleryEntry, getPublicGalleryEntries, addGalleryLike, removeGalleryLike, getFavoriteGalleryEntries, addGalleryFavorite, removeGalleryFavorite, updateGalleryEntry } from "../models/gallery.model.js"
 import { deleteCloudinaryImages, getGalleryImagePublicIds } from "../utils/galleryCloudinary.js"
+import { randomUUID } from "node:crypto"
 
 const uploadGalleryImages = async (files) => {
     const uploadedImages = []
+    const attemptedPublicIds = []
     try {
         const imageFiles = files || []
         for (const [index, file] of imageFiles.entries()) {
-            const uploaded = await uploadOnCloudinary(file.path)
+            const publicId = randomUUID()
+            attemptedPublicIds.push(publicId)
+            let uploaded
+            try {
+                uploaded = await uploadOnCloudinary(file.path, {
+                    throwOnError: true,
+                    retries: 2,
+                    public_id: publicId,
+                    overwrite: true
+                })
+            } catch (error) {
+                throw new apiError(502, `Photo ${index + 1} could not be uploaded: ${error.message}`)
+            }
             if (!uploaded?.secure_url || !uploaded?.public_id) {
                 throw new apiError(502, `Photo ${index + 1} could not be uploaded. Please try again.`)
             }
@@ -21,7 +35,7 @@ const uploadGalleryImages = async (files) => {
         }
         return uploadedImages
     } catch (error) {
-        await deleteCloudinaryImages(uploadedImages.map((image) => image.public_id))
+        await deleteCloudinaryImages(attemptedPublicIds)
         throw error
     }
 }
