@@ -46,8 +46,8 @@ const sendPasswordResetEmail = async (email, token) => {
         from: SMTP_FROM,
         to: email,
         subject: "Reset your Wanderlust password",
-        text: `We received a request to reset your Wanderlust password. Use this one-time link within 30 minutes:\n\n${resetUrl.href}\n\nIf you did not request this, you can ignore this email.`,
-        html: `<p>We received a request to reset your Wanderlust password.</p><p><a href="${resetUrl.href}">Reset your password</a></p><p>This one-time link expires in 30 minutes. If you did not request this, you can ignore this email.</p>`
+        text: `We received a request to reset your Wanderlust password. Use this one-time link within 5 minutes:\n\n${resetUrl.href}\n\nIf you did not request this, you can ignore this email.`,
+        html: `<p>We received a request to reset your Wanderlust password.</p><p><a href="${resetUrl.href}">Reset your password</a></p><p>This one-time link expires in 5 minutes. If you did not request this, you can ignore this email.</p>`
     })
 }
 

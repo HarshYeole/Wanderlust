@@ -49,7 +49,7 @@ const ForgotPassword = () => {
           <div className="mt-4 space-y-5">
             <p className="text-sm leading-6 text-slate-600">
               If an account exists for {email.trim()}, a password reset link will
-              arrive shortly. The link expires in 30 minutes.
+              arrive shortly. The link expires in 5 minutes.
             </p>
             <Link
               to="/login"

@@ -208,7 +208,7 @@ const requestPasswordReset = asyncHandler(async(req, res) => {
     if (user) {
         const token = randomBytes(32).toString("hex")
         const tokenHash = createHash("sha256").update(token).digest("hex")
-        const expiresAt = new Date(Date.now() + 30 * 60 * 1000)
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000)
         const storedToken = await createPasswordResetToken(user.id, tokenHash, expiresAt)
 
         if (storedToken) {
