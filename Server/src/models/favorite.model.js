@@ -1,4 +1,5 @@
 import pool from "../config/db.js"
+import { ensureGalleryTable } from "./gallery.model.js"
 
 let savedPlacesTableReady
 
@@ -32,6 +33,14 @@ const addSavedPlace = async ({ user_id, place_key, name, country, image }) => {
 
 const getSavedPlaces = async (user_id) => {
     await ensureSavedPlacesTable()
+    await ensureGalleryTable()
+    await pool.query(`DELETE FROM user_saved_places AS saved
+        WHERE saved.user_id = $1
+          AND NOT EXISTS (
+              SELECT 1 FROM user_galleries AS gallery
+              WHERE gallery.is_public = TRUE
+                AND LOWER(BTRIM(gallery.place_name)) = LOWER(BTRIM(saved.place_key))
+          );`, [user_id])
     const result = await pool.query(`SELECT id, place_key, name, country, image, created_at
         FROM user_saved_places WHERE user_id = $1 ORDER BY created_at DESC;`, [user_id])
     return result.rows
