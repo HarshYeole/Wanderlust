@@ -13,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../services/api";
 
@@ -58,7 +58,6 @@ const getTripDescription = (description) => {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [completedTrips, setCompletedTrips] = useState([]);
@@ -96,11 +95,6 @@ const Profile = () => {
   });
 
   useEffect(() => {
-    if (pathname !== "/profile") return undefined;
-
-    let isCurrent = true;
-    setIsLoading(true);
-
     const loadAccount = async () => {
       try {
         const responses = await Promise.all([
@@ -120,8 +114,6 @@ const Profile = () => {
             .catch(() => ({ data: { data: [] } })),
           api.get("/gallery").catch(() => ({ data: { data: [] } })),
         ]);
-        if (!isCurrent) return;
-
         setUser(responses[0].data.data);
         setProfile(responses[1].data.data);
         setCompletedTrips((responses[2].data.data || []).filter(isCompleted));
@@ -135,15 +127,12 @@ const Profile = () => {
         }));
         setInvitations(responses[5].data.data || []);
       } finally {
-        if (isCurrent) setIsLoading(false);
+        setIsLoading(false);
       }
     };
 
     loadAccount();
-    return () => {
-      isCurrent = false;
-    };
-  }, [pathname]);
+  }, []);
 
   useEffect(() => {
     const search = tripForm.destination.trim();
