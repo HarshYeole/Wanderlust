@@ -156,4 +156,4 @@ const deleteGalleryEntry = async (id, userId) => {
     return result.rows[0]
 }
 
-export { ensureGalleryTable, createGalleryEntry, getGalleryEntries, getUserGalleryEntry, getPublicGalleryEntries, addGalleryLike, removeGalleryLike, getFavoriteGalleryEntries, addGalleryFavorite, removeGalleryFavorite, updateGalleryEntry, deleteGalleryEntry }
+export { createGalleryEntry, getGalleryEntries, getUserGalleryEntry, getPublicGalleryEntries, addGalleryLike, removeGalleryLike, getFavoriteGalleryEntries, addGalleryFavorite, removeGalleryFavorite, updateGalleryEntry, deleteGalleryEntry }
