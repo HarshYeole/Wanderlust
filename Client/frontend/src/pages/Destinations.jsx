@@ -143,7 +143,7 @@ const Destinations = () => {
         <div className="mt-10 border-y border-slate-200 py-8">
           <p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-700">Try searching for a place</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            {["Goa", "Kyoto", "Bali", "Jaipur", "Manali"].map((place) => (
+            {["Goa", "Agra", "Bali", "Jaipur", "Manali"].map((place) => (
               <button key={place} type="button" onClick={() => setQuery(place)} className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-700 hover:text-emerald-800">{place}</button>
             ))}
           </div>
